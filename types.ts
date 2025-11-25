@@ -1,3 +1,4 @@
+
 export enum Gender {
   MALE = 'Male',
   FEMALE = 'Female',
@@ -25,6 +26,8 @@ export interface GenerationConfig {
   volume: number; // 0 to 100 (Flat to Voluminous)
   parting: PartingType;
   bangs: BangsType;
+  age: number;    // 0 to 100 (Young to Old)
+  beard: boolean; // Facial hair toggle
 }
 
 export interface SavedConfig {
