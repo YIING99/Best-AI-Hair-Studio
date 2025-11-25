@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { GenerationConfig, HairStyle, AnalysisResult } from "../types";
 
@@ -29,6 +30,22 @@ export const generateHairstyle = async (
     const lengthDesc = mapRangeToDesc(config.length, ['very short', 'short', 'medium length', 'long', 'very long']);
     const curlDesc = mapRangeToDesc(config.curl, ['bone straight', 'straight', 'wavy', 'curly', 'very curly/coily']);
     const volumeDesc = mapRangeToDesc(config.volume, ['sleek and flat', 'natural volume', 'voluminous', 'high volume']);
+    
+    // Detailed Age mapping for smoother gradient
+    let ageInstruction = "";
+    if (config.age !== undefined) {
+        if (config.age < 20) {
+            ageInstruction = "Make the person appear like a teenager (approx 18-20 years old).";
+        } else if (config.age < 40) {
+            ageInstruction = "Make the person appear as a young adult (20s to early 30s).";
+        } else if (config.age < 60) {
+            ageInstruction = "Make the person appear middle-aged (40s to 50s).";
+        } else if (config.age < 80) {
+            ageInstruction = "Make the person appear mature/senior (60s).";
+        } else {
+            ageInstruction = "Make the person appear elderly (70+ years old).";
+        }
+    }
 
     // Construct a detailed prompt
     let prompt = `Edit this image to change the person's hairstyle.
@@ -42,9 +59,7 @@ export const generateHairstyle = async (
     `;
 
     if (config.hairColor) {
-      // If it looks like a hex code, try to describe it, but passing the hex often works with GenAI models 
-      // if context is clear, or we rely on the model to interpret the hex.
-      prompt += `- Hair Color: ${config.hairColor} (make it look natural).\n`;
+      prompt += `- Hair Color: ${config.hairColor} (apply this color naturally to the hair).\n`;
     }
 
     if (config.parting !== 'auto') {
@@ -54,11 +69,19 @@ export const generateHairstyle = async (
     if (config.bangs !== 'auto') {
         prompt += `- Bangs/Fringe: ${config.bangs === 'none' ? 'no bangs, forehead visible' : config.bangs + ' style bangs'}.\n`;
     }
+
+    if (config.beard) {
+        prompt += `- Facial Hair: Add a well-groomed beard/facial hair suitable for the face.\n`;
+    }
+    
+    if (ageInstruction) {
+        prompt += `- Age Adjustment: ${ageInstruction}. Ensure the facial features (skin texture, wrinkles) reflect this age naturally.\n`;
+    }
     
     prompt += `
     CRITICAL INSTRUCTIONS:
-    1. Keep the person's face, skin tone, facial expression, pose, clothing, and background EXACTLY the same.
-    2. Only change the hair on the head.
+    1. Keep the person's pose, clothing, and background EXACTLY the same.
+    2. Only change the hair on the head (and facial hair/skin age details if requested).
     3. Ensure the hair blends naturally with the scalp and forehead.
     4. The result must be photorealistic.
     `;

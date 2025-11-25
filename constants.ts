@@ -1,81 +1,291 @@
+
 import { Gender, HairStyle } from './types';
 
-// Using clear text-based placeholders to represent "Schematic" images
-const getSchematicUrl = (text: string) => 
-  `https://placehold.co/600x400/1e293b/94a3b8?text=${encodeURIComponent(text)}&font=playfair-display`;
+// Helper to generate a consistent photorealistic image URL based on description
+// Using a deterministic seed based on the ID ensures the image remains the same across reloads
+const getStyleImageUrl = (description: string, gender: Gender, id: string) => {
+  const seed = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  // Updated to 'Asian' model to match the localized context and generally reliable AI generation for these features
+  const genderTerm = gender === Gender.MALE ? 'handsome Asian male model' : 'beautiful Asian female model';
+  // More specific prompt for salon-style quality
+  const prompt = `close-up professional salon photography of ${genderTerm} with ${description} hairstyle, neutral studio background, soft lighting, 8k, highly detailed hair texture, looking at camera`;
+  // Using 'flux' model for better realism
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=400&height=400&nologo=true&seed=${seed}&model=flux`;
+};
 
 export const PRESET_STYLES: HairStyle[] = [
+  // --- Female Styles ---
   {
     id: 'f-bob',
     name: 'Classic Bob',
     nameZh: '经典波波头',
-    description: 'a sleek, chin-length bob cut',
+    description: 'sleek chin-length bob cut hairstyle',
     descriptionZh: '齐下巴的顺滑波波头',
     gender: Gender.FEMALE,
-    imageUrl: getSchematicUrl('Classic Bob')
+    imageUrl: getStyleImageUrl('sleek chin-length bob cut', Gender.FEMALE, 'f-bob')
   },
   {
     id: 'f-long-wavy',
     name: 'Long Waves',
     nameZh: '长卷发',
-    description: 'long, voluminous wavy hair',
+    description: 'long voluminous wavy hairstyle',
     descriptionZh: '蓬松的长卷发',
     gender: Gender.FEMALE,
-    imageUrl: getSchematicUrl('Long Waves')
+    imageUrl: getStyleImageUrl('long voluminous wavy hair', Gender.FEMALE, 'f-long-wavy')
   },
   {
     id: 'f-pixie',
     name: 'Pixie Cut',
     nameZh: '精灵短发',
-    description: 'a short, textured pixie cut',
+    description: 'short textured pixie cut hairstyle',
     descriptionZh: '层次感丰富的超短发',
     gender: Gender.FEMALE,
-    imageUrl: getSchematicUrl('Pixie Cut')
+    imageUrl: getStyleImageUrl('short textured pixie cut', Gender.FEMALE, 'f-pixie')
   },
   {
     id: 'f-bangs',
     name: 'Straight with Bangs',
     nameZh: '齐刘海直发',
-    description: 'long straight hair with forehead bangs',
+    description: 'long straight hair with blunt bangs',
     descriptionZh: '带刘海的长直发',
     gender: Gender.FEMALE,
-    imageUrl: getSchematicUrl('Straight + Bangs')
+    imageUrl: getStyleImageUrl('long straight hair with blunt bangs', Gender.FEMALE, 'f-bangs')
   },
+  {
+    id: 'f-curtain-bangs',
+    name: 'Curtain Bangs Layers',
+    nameZh: '八字刘海层次长发',
+    description: 'long layered hair with curtain bangs',
+    descriptionZh: '带有修饰脸型的八字刘海的长层次发',
+    gender: Gender.FEMALE,
+    imageUrl: getStyleImageUrl('long layered hair with curtain bangs', Gender.FEMALE, 'f-curtain-bangs')
+  },
+  {
+    id: 'f-wolf',
+    name: 'Wolf Cut',
+    nameZh: '鲻鱼头/狼尾',
+    description: 'trendy wolf cut with shaggy layers',
+    descriptionZh: '时髦的狼尾剪，带有蓬松层次和刘海',
+    gender: Gender.FEMALE,
+    imageUrl: getStyleImageUrl('trendy wolf cut hairstyle', Gender.FEMALE, 'f-wolf')
+  },
+  {
+    id: 'f-shag',
+    name: 'Modern Shag',
+    nameZh: '现代复古碎发',
+    description: 'textured shag cut with choppy layers',
+    descriptionZh: '带有凌乱层次感的现代复古碎发(Shag)',
+    gender: Gender.FEMALE,
+    imageUrl: getStyleImageUrl('textured shag haircut', Gender.FEMALE, 'f-shag')
+  },
+  {
+    id: 'f-hime',
+    name: 'Hime Cut',
+    nameZh: '公主切',
+    description: 'straight hair with hime cut sidelocks',
+    descriptionZh: '带有侧发和刘海的公主切直发',
+    gender: Gender.FEMALE,
+    imageUrl: getStyleImageUrl('Japanese Hime cut hairstyle', Gender.FEMALE, 'f-hime')
+  },
+  {
+    id: 'f-layered',
+    name: 'Long Layers',
+    nameZh: '长碎发',
+    description: 'long hair with face-framing layers',
+    descriptionZh: '修饰脸型的长碎发',
+    gender: Gender.FEMALE,
+    imageUrl: getStyleImageUrl('long hair with face-framing layers', Gender.FEMALE, 'f-layered')
+  },
+  {
+    id: 'f-asym-bob',
+    name: 'Asymmetrical Bob',
+    nameZh: '不对称波波头',
+    description: 'asymmetrical bob cut longer on one side',
+    descriptionZh: '一边长一边短的不对称波波头',
+    gender: Gender.FEMALE,
+    imageUrl: getStyleImageUrl('asymmetrical bob hairstyle', Gender.FEMALE, 'f-asym-bob')
+  },
+  {
+    id: 'f-beach-waves',
+    name: 'Beach Waves',
+    nameZh: '海滩波浪卷',
+    description: 'loose tousled beach waves hairstyle',
+    descriptionZh: '慵懒随性的海滩波浪卷',
+    gender: Gender.FEMALE,
+    imageUrl: getStyleImageUrl('loose beach waves hair', Gender.FEMALE, 'f-beach-waves')
+  },
+  {
+    id: 'f-ponytail',
+    name: 'Sleek High Ponytail',
+    nameZh: '干练高马尾',
+    description: 'sleek high ponytail hairstyle',
+    descriptionZh: '向后梳得光洁利落的高马尾',
+    gender: Gender.FEMALE,
+    imageUrl: getStyleImageUrl('sleek high ponytail', Gender.FEMALE, 'f-ponytail')
+  },
+  {
+    id: 'f-space-buns',
+    name: 'Space Buns',
+    nameZh: '双丸子头/哪吒头',
+    description: 'double space buns hairstyle',
+    descriptionZh: '头顶两侧的双丸子头',
+    gender: Gender.FEMALE,
+    imageUrl: getStyleImageUrl('double space buns hairstyle', Gender.FEMALE, 'f-space-buns')
+  },
+  {
+    id: 'f-afro',
+    name: 'Afro',
+    nameZh: '爆炸头',
+    description: 'voluminous natural afro hairstyle',
+    descriptionZh: '自然的蓬松爆炸头',
+    gender: Gender.FEMALE,
+    imageUrl: getStyleImageUrl('voluminous afro hairstyle', Gender.FEMALE, 'f-afro')
+  },
+  {
+    id: 'f-braids',
+    name: 'Box Braids',
+    nameZh: '脏辫/编发',
+    description: 'long box braids hairstyle',
+    descriptionZh: '长款非洲编发',
+    gender: Gender.FEMALE,
+    imageUrl: getStyleImageUrl('long box braids hairstyle', Gender.FEMALE, 'f-braids')
+  },
+
+  // --- Male Styles ---
   {
     id: 'm-undercut',
     name: 'Modern Undercut',
     nameZh: '现代底切',
-    description: 'short sides with a textured top undercut',
+    description: 'modern undercut hairstyle short sides',
     descriptionZh: '两侧铲短，顶部留长的底切发型',
     gender: Gender.MALE,
-    imageUrl: getSchematicUrl('Undercut')
+    imageUrl: getStyleImageUrl('modern undercut men hairstyle', Gender.MALE, 'm-undercut')
+  },
+  {
+    id: 'm-crop',
+    name: 'Textured Crop',
+    nameZh: '纹理短发',
+    description: 'textured crop haircut with blunt fringe',
+    descriptionZh: '带有平刘海的纹理感短发(French Crop)',
+    gender: Gender.MALE,
+    imageUrl: getStyleImageUrl('textured crop haircut men', Gender.MALE, 'm-crop')
   },
   {
     id: 'm-buzz',
     name: 'Buzz Cut',
     nameZh: '寸头',
-    description: 'a very short military-style buzz cut',
+    description: 'short military buzz cut',
     descriptionZh: '极短的军旅风寸头',
     gender: Gender.MALE,
-    imageUrl: getSchematicUrl('Buzz Cut')
+    imageUrl: getStyleImageUrl('military buzz cut men', Gender.MALE, 'm-buzz')
   },
   {
     id: 'm-pompadour',
     name: 'Pompadour',
     nameZh: '庞毕度背头',
-    description: 'voluminous swept-back pompadour style',
+    description: 'voluminous pompadour hairstyle',
     descriptionZh: '蓬松向后梳的复古油头',
     gender: Gender.MALE,
-    imageUrl: getSchematicUrl('Pompadour')
+    imageUrl: getStyleImageUrl('pompadour hairstyle men', Gender.MALE, 'm-pompadour')
+  },
+  {
+    id: 'm-curtains',
+    name: '90s Curtains',
+    nameZh: '中分刘海',
+    description: '90s middle part curtains hairstyle',
+    descriptionZh: '90年代复古中分发型',
+    gender: Gender.MALE,
+    imageUrl: getStyleImageUrl('90s curtains hairstyle men', Gender.MALE, 'm-curtains')
   },
   {
     id: 'm-messy',
     name: 'Messy Quiff',
     nameZh: '凌乱飞机头',
-    description: 'casual messy quiff hairstyle',
+    description: 'messy quiff hairstyle',
     descriptionZh: '随性凌乱的前额上梳发型',
     gender: Gender.MALE,
-    imageUrl: getSchematicUrl('Messy Quiff')
+    imageUrl: getStyleImageUrl('messy quiff hairstyle men', Gender.MALE, 'm-messy')
+  },
+  {
+    id: 'm-sidepart',
+    name: 'Classic Side Part',
+    nameZh: '经典侧分',
+    description: 'classic professional side part hairstyle',
+    descriptionZh: '干练职业的经典侧分',
+    gender: Gender.MALE,
+    imageUrl: getStyleImageUrl('classic side part men haircut', Gender.MALE, 'm-sidepart')
+  },
+  {
+    id: 'm-mullet',
+    name: 'Modern Mullet',
+    nameZh: '现代狼尾',
+    description: 'modern mullet hairstyle',
+    descriptionZh: '两侧较短，后面较长的现代狼尾',
+    gender: Gender.MALE,
+    imageUrl: getStyleImageUrl('modern mullet hairstyle men', Gender.MALE, 'm-mullet')
+  },
+  {
+    id: 'm-fade',
+    name: 'Fade with Design',
+    nameZh: '渐变刻痕',
+    description: 'skin fade haircut with line design',
+    descriptionZh: '带有线条设计的渐变铲青',
+    gender: Gender.MALE,
+    imageUrl: getStyleImageUrl('skin fade haircut with design', Gender.MALE, 'm-fade')
+  },
+  {
+    id: 'm-manbun',
+    name: 'Man Bun',
+    nameZh: '男士丸子头',
+    description: 'man bun top knot hairstyle',
+    descriptionZh: '顶部扎起的丸子头',
+    gender: Gender.MALE,
+    imageUrl: getStyleImageUrl('man bun hairstyle', Gender.MALE, 'm-manbun')
+  },
+  {
+    id: 'm-two-block',
+    name: 'Two Block Cut',
+    nameZh: '韩式二分区',
+    description: 'korean two block haircut',
+    descriptionZh: '两侧铲青顶部留长的韩式二分区发型',
+    gender: Gender.MALE,
+    imageUrl: getStyleImageUrl('korean two block haircut men', Gender.MALE, 'm-two-block')
+  },
+  {
+    id: 'm-faux-hawk',
+    name: 'Faux Hawk',
+    nameZh: '仿莫西干',
+    description: 'faux hawk hairstyle',
+    descriptionZh: '两侧短顶部竖起的仿莫西干发型',
+    gender: Gender.MALE,
+    imageUrl: getStyleImageUrl('faux hawk hairstyle men', Gender.MALE, 'm-faux-hawk')
+  },
+  {
+    id: 'm-dreads',
+    name: 'Short Dreads',
+    nameZh: '短脏辫',
+    description: 'short dreadlocks men',
+    descriptionZh: '短款脏辫',
+    gender: Gender.MALE,
+    imageUrl: getStyleImageUrl('short dreadlocks men', Gender.MALE, 'm-dreads')
+  },
+  {
+    id: 'm-cornrows',
+    name: 'Cornrows',
+    nameZh: '贴头辫',
+    description: 'cornrows braids men',
+    descriptionZh: '紧贴头皮的非洲编发(Cornrows)',
+    gender: Gender.MALE,
+    imageUrl: getStyleImageUrl('cornrows braids men', Gender.MALE, 'm-cornrows')
+  },
+  {
+    id: 'm-slicked',
+    name: 'Slicked Back',
+    nameZh: '大背头',
+    description: 'slicked back hairstyle men',
+    descriptionZh: '经典高光大背头',
+    gender: Gender.MALE,
+    imageUrl: getStyleImageUrl('slicked back hairstyle men', Gender.MALE, 'm-slicked')
   }
 ];
 
@@ -118,7 +328,10 @@ export const TRANSLATIONS = {
     fine_tune: 'Fine-Tune',
     hair_color: 'Hair Color',
     color_natural: 'Natural',
-    color_custom: 'Custom',
+    color_custom: 'Custom HSL',
+    hue: 'Hue',
+    saturation: 'Saturation',
+    lightness: 'Lightness',
     length: 'Length',
     short: 'Short',
     long: 'Long',
@@ -130,6 +343,10 @@ export const TRANSLATIONS = {
     full: 'Full',
     parting: 'Parting',
     bangs: 'Bangs',
+    age_label: 'Visual Age',
+    age_young: 'Younger',
+    age_old: 'Older',
+    beard_label: 'Facial Hair / Beard',
     new_photo: 'New Photo',
     save_image: 'Save Image',
     share_image: 'Share',
@@ -167,7 +384,10 @@ export const TRANSLATIONS = {
     fine_tune: '细节调整',
     hair_color: '发色',
     color_natural: '自然色',
-    color_custom: '自定义',
+    color_custom: '自定义(HSL)',
+    hue: '色相',
+    saturation: '饱和度',
+    lightness: '亮度',
     length: '长度',
     short: '短',
     long: '长',
@@ -179,6 +399,10 @@ export const TRANSLATIONS = {
     full: '蓬松',
     parting: '分缝',
     bangs: '刘海',
+    age_label: '视觉年龄',
+    age_young: '年轻',
+    age_old: '年长',
+    beard_label: '胡须/面部毛发',
     new_photo: '重选照片',
     save_image: '保存图片',
     share_image: '分享',

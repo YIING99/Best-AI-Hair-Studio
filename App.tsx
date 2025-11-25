@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { ImageUploader } from './components/ImageUploader';
 import { Button } from './components/Button';
 import { generateHairstyle, extractHairstyleDescription, analyzeFaceAndSuggestStyles } from './services/geminiService';
@@ -32,6 +33,18 @@ const TrashIcon = () => (
     </svg>
 );
 
+// HSL to Hex Helper
+const hslToHex = (h: number, s: number, l: number) => {
+  l /= 100;
+  const a = s * Math.min(l, 1 - l) / 100;
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+};
+
 const App: React.FC = () => {
   // --- State ---
   const [language, setLanguage] = useState<Language>('zh');
@@ -46,6 +59,10 @@ const App: React.FC = () => {
   const [selectedGenderTab, setSelectedGenderTab] = useState<Gender>(Gender.FEMALE);
   const [selectedStyle, setSelectedStyle] = useState<HairStyle | null>(null);
   
+  // Custom Color State (HSL)
+  const [customHSL, setCustomHSL] = useState({ h: 30, s: 70, l: 50 });
+  const [isCustomColorMode, setIsCustomColorMode] = useState(false);
+
   // Persistent States
   const [customStyles, setCustomStyles] = useState<HairStyle[]>(() => {
     const saved = localStorage.getItem('customStyles');
@@ -63,7 +80,9 @@ const App: React.FC = () => {
     curl: 30,
     volume: 50,
     parting: 'auto',
-    bangs: 'auto'
+    bangs: 'auto',
+    age: 50,
+    beard: false
   });
 
   // History State
@@ -78,6 +97,14 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('savedConfigs', JSON.stringify(savedConfigs));
   }, [savedConfigs]);
+
+  // Sync HSL to config.hairColor when in custom mode
+  useEffect(() => {
+    if (isCustomColorMode) {
+        const hex = hslToHex(customHSL.h, customHSL.s, customHSL.l);
+        setConfig(prev => ({ ...prev, hairColor: hex }));
+    }
+  }, [customHSL, isCustomColorMode]);
 
   // Derived state
   const stylesToShow = [...PRESET_STYLES.filter(s => s.gender === selectedGenderTab), ...customStyles];
@@ -104,8 +131,6 @@ const App: React.FC = () => {
       const result = await analyzeFaceAndSuggestStyles(image, PRESET_STYLES);
       setAnalysisResult(result);
       
-      // If we have recommended styles, maybe try to auto-select the first one?
-      // Or just switch to the tab of the first recommended style if possible.
       if (result.recommendedStyleIds.length > 0) {
         const firstRec = PRESET_STYLES.find(s => s.id === result.recommendedStyleIds[0]);
         if (firstRec) {
@@ -128,7 +153,7 @@ const App: React.FC = () => {
         name: t.custom_template_name,
         nameZh: t.custom_template_name,
         description: description,
-        descriptionZh: description, // Auto-translation could be added here in future
+        descriptionZh: description, 
         gender: Gender.UNISEX,
         imageUrl: base64,
         isCustom: true
@@ -240,6 +265,16 @@ const App: React.FC = () => {
     return language === 'zh' ? (style.nameZh || style.name) : style.name;
   };
 
+  const handlePresetColorClick = (colorValue: string) => {
+    setIsCustomColorMode(false);
+    setConfig({...config, hairColor: colorValue});
+  };
+
+  const handleCustomColorClick = () => {
+    setIsCustomColorMode(true);
+    // Don't necessarily reset config.hairColor yet, wait for slider movement, or set to current HSL
+  };
+
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans">
       {/* Header */}
@@ -329,7 +364,14 @@ const App: React.FC = () => {
                       ${selectedStyle?.id === style.id ? 'border-brand-500 ring-2 ring-brand-500/20' : isRecommended ? 'border-brand-500/50' : 'border-transparent hover:border-slate-600'}
                     `}
                   >
-                    <img src={style.imageUrl} alt={style.name} className="w-full h-24 object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <img 
+                        src={style.imageUrl} 
+                        alt={style.name} 
+                        className="w-full h-24 object-cover opacity-80 group-hover:opacity-100 transition-opacity bg-slate-900" 
+                        onError={(e) => {
+                            e.currentTarget.src = `https://placehold.co/400x400/1e293b/cbd5e1?text=${encodeURIComponent(style.name.substring(0,6))}`;
+                        }}
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex items-end p-2">
                       <span className="text-xs font-medium text-white truncate w-full text-center">{getStyleName(style)}</span>
                     </div>
@@ -379,18 +421,31 @@ const App: React.FC = () => {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="text-xs text-slate-500 font-semibold">{t.hair_color}</label>
-                <span className="text-xs text-slate-400">
-                    {config.hairColor ? (HAIR_COLORS.find(c => c.value === config.hairColor)?.name || t.color_custom) : t.color_natural}
-                </span>
+                <div className="flex items-center gap-2">
+                    {isCustomColorMode && (
+                         <div 
+                             className="w-4 h-4 rounded-full border border-slate-500" 
+                             style={{ backgroundColor: config.hairColor }} 
+                         />
+                    )}
+                    <span className="text-xs text-slate-400">
+                        {isCustomColorMode 
+                            ? t.color_custom 
+                            : (config.hairColor ? (HAIR_COLORS.find(c => c.value === config.hairColor)?.name || t.color_custom) : t.color_natural)
+                        }
+                    </span>
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2 items-center">
+              
+              {/* Presets */}
+              <div className="flex flex-wrap gap-2 items-center mb-3">
                 {HAIR_COLORS.map(c => (
                   <button
                     key={c.name}
-                    onClick={() => setConfig({...config, hairColor: c.value})}
+                    onClick={() => handlePresetColorClick(c.value)}
                     className={`
                       w-7 h-7 rounded-full border-2 transition-transform hover:scale-110
-                      ${config.hairColor === c.value ? 'border-white scale-110 ring-2 ring-white/20' : 'border-transparent'}
+                      ${!isCustomColorMode && config.hairColor === c.value ? 'border-white scale-110 ring-2 ring-white/20' : 'border-transparent'}
                     `}
                     style={{ 
                         backgroundColor: c.value === '#000000' ? '#1a1a1a' : (c.value || '#334155'),
@@ -399,27 +454,63 @@ const App: React.FC = () => {
                     title={c.name}
                   />
                 ))}
-                {/* Custom Color Picker */}
-                <div className="relative group">
-                    <input 
-                        type="color" 
-                        value={config.hairColor || '#000000'}
-                        onChange={(e) => setConfig({...config, hairColor: e.target.value})}
-                        className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
-                    />
-                    <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 ${!HAIR_COLORS.some(c => c.value === config.hairColor) && config.hairColor ? 'border-white ring-2 ring-white/20' : 'border-transparent'}`}>
-                        <span className="text-[10px] font-bold text-white drop-shadow-md">+</span>
-                    </div>
-                </div>
+                {/* Custom Color Trigger */}
+                <button
+                    onClick={handleCustomColorClick}
+                    className={`w-7 h-7 rounded-full border-2 flex items-center justify-center bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 transition-transform ${isCustomColorMode ? 'border-white ring-2 ring-white/20 scale-110' : 'border-transparent'}`}
+                >
+                    <span className="text-[10px] font-bold text-white drop-shadow-md">+</span>
+                </button>
               </div>
+
+              {/* HSL Sliders (Visible if Custom Mode) */}
+              {isCustomColorMode && (
+                  <div className="bg-slate-900/50 p-3 rounded-lg space-y-2 border border-slate-700">
+                      <div>
+                          <div className="flex justify-between text-[10px] text-slate-400">
+                              <span>{t.hue}</span>
+                              <span>{customHSL.h}°</span>
+                          </div>
+                          <input 
+                            type="range" min="0" max="360" value={customHSL.h}
+                            onChange={(e) => setCustomHSL({...customHSL, h: Number(e.target.value)})}
+                            className="w-full h-1.5 rounded-lg appearance-none cursor-pointer"
+                            style={{ background: `linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%)` }}
+                          />
+                      </div>
+                      <div>
+                          <div className="flex justify-between text-[10px] text-slate-400">
+                              <span>{t.saturation}</span>
+                              <span>{customHSL.s}%</span>
+                          </div>
+                          <input 
+                            type="range" min="0" max="100" value={customHSL.s}
+                            onChange={(e) => setCustomHSL({...customHSL, s: Number(e.target.value)})}
+                            className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-slate-400"
+                          />
+                      </div>
+                      <div>
+                          <div className="flex justify-between text-[10px] text-slate-400">
+                              <span>{t.lightness}</span>
+                              <span>{customHSL.l}%</span>
+                          </div>
+                          <input 
+                            type="range" min="0" max="100" value={customHSL.l}
+                            onChange={(e) => setCustomHSL({...customHSL, l: Number(e.target.value)})}
+                            className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-white"
+                          />
+                      </div>
+                  </div>
+              )}
             </div>
 
-            {/* Sliders Section */}
-            <div className="space-y-4">
+            {/* Config Sliders Section */}
+            <div className="space-y-4 pt-2 border-t border-slate-700/50">
                 {[
                     { label: t.length, key: 'length', minLabel: t.short, maxLabel: t.long },
                     { label: t.curl, key: 'curl', minLabel: t.straight, maxLabel: t.coily },
                     { label: t.volume, key: 'volume', minLabel: t.flat, maxLabel: t.full },
+                    { label: t.age_label, key: 'age', minLabel: t.age_young, maxLabel: t.age_old },
                 ].map((item) => (
                     <div key={item.key}>
                         <div className="flex justify-between text-xs mb-1">
@@ -482,6 +573,22 @@ const App: React.FC = () => {
                     </div>
                  </div>
             </div>
+
+            {/* Beard Toggle (Male Only) */}
+            {selectedGenderTab === Gender.MALE && (
+                <div className="flex items-center justify-between p-2 bg-slate-700/30 rounded-lg border border-slate-700">
+                    <span className="text-xs text-slate-400 font-semibold">{t.beard_label}</span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                            type="checkbox" 
+                            className="sr-only peer"
+                            checked={config.beard}
+                            onChange={(e) => setConfig({...config, beard: e.target.checked})} 
+                        />
+                        <div className="w-9 h-5 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-600"></div>
+                    </label>
+                </div>
+            )}
 
           </div>
 
