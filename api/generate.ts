@@ -1,8 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 
-export const config = {
-  runtime: 'edge', // Optional: Use Edge runtime for speed if supported, or standard Node
-};
+// Default runtime is Node.js, which is recommended for the full SDK.
+// Removed 'runtime: edge' to prevent compatibility issues.
 
 // Helper to remove data:image prefix
 const cleanBase64 = (str: string) => str.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
