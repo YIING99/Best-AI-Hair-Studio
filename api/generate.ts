@@ -1,9 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 
-// Default runtime is Node.js, which is recommended for the full SDK.
-// Removed 'runtime: edge' to prevent compatibility issues.
+// Standard Vercel Node.js Serverless Function Handler
+// Refactored from Edge syntax (Request/Response) to Node syntax (req, res)
 
-// Helper to remove data:image prefix
 const cleanBase64 = (str: string) => str.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
 const getMimeType = (str: string) => {
   const match = str.match(/^data:image\/(png|jpeg|jpg|webp);base64,/);
@@ -15,19 +14,21 @@ const mapRangeToDesc = (value: number, descriptors: string[]) => {
   return descriptors[index];
 };
 
-export default async function handler(request: Request) {
-  if (request.method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
+export default async function handler(req: any, res: any) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
 
   try {
-    const { image, style, config } = await request.json();
+    // In Vercel Node.js runtime, req.body is automatically parsed if Content-Type is application/json
+    const { image, style, config } = req.body;
     
     if (!process.env.GEMINI_API_KEY) {
-      return new Response(JSON.stringify({ error: "Server configuration error: API Key missing" }), { status: 500 });
+      return res.status(500).json({ error: "Server configuration error: API Key missing" });
     }
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     
-    // Logic moved from client to server
     const lengthDesc = mapRangeToDesc(config.length, ['very short', 'short', 'medium length', 'long', 'very long']);
     const curlDesc = mapRangeToDesc(config.curl, ['bone straight', 'straight', 'wavy', 'curly', 'very curly/coily']);
     const volumeDesc = mapRangeToDesc(config.volume, ['sleek and flat', 'natural volume', 'voluminous', 'high volume']);
@@ -71,14 +72,12 @@ export default async function handler(request: Request) {
 
     if (!resultImage) throw new Error("Generation failed - No image returned");
 
-    return new Response(JSON.stringify({ 
+    return res.status(200).json({ 
         image: `data:image/png;base64,${resultImage.data}` 
-    }), {
-        headers: { 'Content-Type': 'application/json' }
     });
 
   } catch (error: any) {
     console.error("Server Error:", error);
-    return new Response(JSON.stringify({ error: error.message || "Internal Server Error" }), { status: 500 });
+    return res.status(500).json({ error: error.message || "Internal Server Error" });
   }
 }

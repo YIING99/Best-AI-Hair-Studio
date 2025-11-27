@@ -1,7 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-// Default runtime is Node.js, which is recommended for the full SDK.
-// Removed 'runtime: edge' to prevent compatibility issues.
+// Standard Vercel Node.js Serverless Function Handler
 
 const cleanBase64 = (str: string) => str.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
 const getMimeType = (str: string) => {
@@ -9,11 +8,18 @@ const getMimeType = (str: string) => {
     return match ? `image/${match[1]}` : 'image/jpeg';
 };
 
-export default async function handler(request: Request) {
-  if (request.method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
+export default async function handler(req: any, res: any) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
 
   try {
-    const { image, availableStyles } = await request.json();
+    const { image, availableStyles } = req.body;
+    
+    if (!process.env.GEMINI_API_KEY) {
+        return res.status(500).json({ error: "API Key missing" });
+    }
+
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
     const stylesJson = JSON.stringify(availableStyles);
@@ -42,8 +48,9 @@ export default async function handler(request: Request) {
       }
     });
 
-    return new Response(response.text, { headers: { 'Content-Type': 'application/json' } });
+    return res.status(200).send(response.text);
+
   } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    return res.status(500).json({ error: error.message });
   }
 }
